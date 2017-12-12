@@ -1,0 +1,11 @@
+Sources/main.c
+Includes/MK60D10.h
+Project_Settings/Startup_Code/system_MK60D10.c
+Includes/system_MK60D10.h
+Project_Settings/Startup_Code/startup_MK60D10.S
+Project_Settings/Linker_Files/MK60DN512xxx10_flash.ld
+Includes/core_cm0plus.h
+Includes/core_cm4.h
+Includes/core_cm4_simd.h
+Includes/core_cmFunc.h
+Includes/core_cmInstr.h
