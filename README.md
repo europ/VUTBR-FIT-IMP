@@ -1,2 +1,2 @@
-# VUTBR-FIT-IMP
-VUTBR - FIT: IMP 2017/2018 
+# [IMP - Microprocessors and Embedded Systems](https://www.fit.vutbr.cz/study/courses/index.php.en?id=12166)
+## © Adrián Tóth
