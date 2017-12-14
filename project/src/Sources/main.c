@@ -13,6 +13,9 @@
 //#################################################################################################
 //#################################################################################################
 
+#define BUFFER_SIZE 100
+#define PRINT_NEWLINE() {SendStr(newline);}
+
 // Mapping of LEDs and buttons to specific port pins:
 // Note: only D9, SW3 and SW5 are used in this sample app
 
@@ -31,14 +34,11 @@
 //#################################################################################################
 //#################################################################################################
 
-unsigned int compare = 0x200;
+unsigned char buffer[BUFFER_SIZE];
+unsigned char newline[3] = "\r\n";
 
-unsigned char prompt[50] = "\r\nZadajte login:\r\n";
-unsigned char corrl[50] = "xtotha01";
-unsigned char login[50];
-
-unsigned char message_success[50] = "\r\nSuccess\r\n";
-unsigned char message_error  [50] = "\r\nError!\r\n";
+unsigned char message_success[50] = "Success\n";
+unsigned char message_error  [50] = "Error!\n";
 
 //#################################################################################################
 //#################################################################################################
@@ -51,17 +51,41 @@ void SendCh(char c) {
 }
 
 // Send string
-void SendStr(char *s) {
+void SendStr(char* s) {
     unsigned int i = 0;
-    while (s[i]!='\0') {
+    while (s[i] != '\0') {
         SendCh(s[i++]);
     }
 }
 
 // Receive character
-char ReceiveCh(void) {
+unsigned char ReceiveCh() {
     while( !(UART5->S1 & UART_S1_RDRF_MASK) );
     return UART5->D;
+}
+
+void ReceiveStr() {
+
+    for (unsigned int i=0; i<BUFFER_SIZE; i++) {
+        buffer[i]='\0';
+    }
+
+    unsigned char c;
+    unsigned int i = 0;
+
+    while (i < (BUFFER_SIZE - 1) ) {
+
+        c = ReceiveCh();
+        SendCh(c);
+
+        if (c == '\r')
+            break;
+
+        buffer[i] = c;
+        i++;
+    }
+
+    buffer[i] = '\0';
 }
 
 // Delay
@@ -70,7 +94,7 @@ void Delay(unsigned long long int bound) {
 }
 
 // Beeper
-void Beep(void) {
+void Beep() {
     for (unsigned int q=0; q<500; q++) {
         PTA->PDOR = GPIO_PDOR_PDO(0x0010);
         Delay(500);
@@ -80,14 +104,14 @@ void Beep(void) {
 }
 
 // MCU initialization
-void MCUInit(void) {
+void MCUInit() {
     MCG_C4 |= ( MCG_C4_DMX32_MASK | MCG_C4_DRST_DRS(0x01) );
     SIM_CLKDIV1 |= SIM_CLKDIV1_OUTDIV1(0x00);
     WDOG_STCTRLH &= ~WDOG_STCTRLH_WDOGEN_MASK; // turning the watchdog off
 }
 
 // MCU pin initialization
-void PinInit(void) {
+void PinInit() {
     SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
     SIM->SCGC1 |= SIM_SCGC1_UART5_MASK;
     PORTE->PCR[8] = ( 0 | PORT_PCR_MUX(0x03) ); // UART0_TX
@@ -98,7 +122,7 @@ void PinInit(void) {
 }
 
 /* Inicializace UART - nastaveni prenosove rychlosti 115200Bd, 8 bitu, bez parity */
-void UART5Init(void) {
+void UART5Init() {
     UART5->C2 &= ~(UART_C2_TE_MASK | UART_C2_RE_MASK);
     UART5->BDH = 0x00;
     UART5->BDL = 0x1A;      // Baud rate 115 200 Bd, 1 stop bit
@@ -112,7 +136,7 @@ void UART5Init(void) {
     UART5->C2 |= ( UART_C2_TE_MASK | UART_C2_RE_MASK );   // Zapnout vysilac i prijimac
 }
 
-void PortsInit(void) {
+void PortsInit() {
     /* Turn on all port clocks */
     SIM->SCGC5 = SIM_SCGC5_PORTA_MASK |
                  SIM_SCGC5_PORTB_MASK |
@@ -137,7 +161,7 @@ void PortsInit(void) {
     PTB->PDOR |= GPIO_PDOR_PDO( 0x3C); // turn all LEDs OFF
 }
 
-int main(void) {
+int main() {
 
     // initialization
     MCUInit();
@@ -145,27 +169,17 @@ int main(void) {
     PinInit();
     UART5Init();
 
-    unsigned char c;
     while (1) {
 
-        SendStr(prompt);    // Vyslani vyzvy k zadani loginu
+        SendStr("=======\r\n");
 
-        for(unsigned int n=0; n<8; n++) {
-            c = ReceiveCh();
-            SendCh(c);        // Prijaty znak se hned vysle - echo linky
-            login[n]=c;       // Postupne se uklada do pole
-        }
+        ReceiveStr();
+        PRINT_NEWLINE();
 
+        SendStr(buffer);
+        PRINT_NEWLINE();
 
-        if(strcmp(login, corrl) == 0) {
-            Beep();
-            SendStr(message_success);
-        }
-        else {
-            SendStr(message_error);
-        }
     }
-
 
     return 0;
 }
