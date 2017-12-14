@@ -8,6 +8,7 @@
 
 #include "MK60D10.h"
 #include <string.h>
+#include <time.h>
 
 //#################################################################################################
 //#################################################################################################
@@ -150,6 +151,8 @@ void PortsInit() {
         SIM_SCGC5_PORTD_MASK |
         SIM_SCGC5_PORTE_MASK ;
 
+    SIM->SCGC6 = SIM_SCGC6_RTC_MASK; // RTC's clock
+
     // Set corresponding PTB pins (connected to LED's) for GPIO functionality
     PORTB->PCR[5] = PORT_PCR_MUX(0x01); // D9
     PORTB->PCR[4] = PORT_PCR_MUX(0x01); // D10
@@ -167,23 +170,78 @@ void PortsInit() {
     PTB->PDOR |= GPIO_PDOR_PDO(0x3C); // turn all LEDs OFF
 }
 
+void RTC_IRQHandler() {
+    if(RTC_SR & RTC_SR_TAF_MASK) {
+        RTC_TAR = 0;
+        Beep();
+        SendStr("=======ALARM=======\r\n");
+        SendStr("Time Alarm Flag\r\n");
+    }
+/*
+    if(RTC_SR & RTC_SR_TOF_MASK) {
+        SendStr("Time Overflow Flag\r\n");
+    }
+    if(RTC_SR & RTC_SR_TIF_MASK) {
+        SendStr("Time Invalid Flag\r\n");
+    }
+*/
+
+}
+
+void RTCInit () {
+
+    RTC_CR |= RTC_CR_SWR_MASK;  // SWR = 1, reset all RTC's registers
+    RTC_CR &= ~RTC_CR_SWR_MASK; // SWR = 0
+
+    RTC_TCR = 0x0000; // reset CIR and TCR
+
+    RTC_CR |= RTC_CR_OSCE_MASK; // enable 32.768 kHz oscillator
+
+    Delay(0x600000);
+
+    RTC_SR &= ~RTC_SR_TCE_MASK; // turn OFF RTC
+
+    RTC_TSR = 10U;
+    RTC_TAR = RTC_TSR+3U;
+
+    RTC_IER |= RTC_IER_TAIE_MASK;
+
+    NVIC_ClearPendingIRQ(RTC_IRQn);
+    NVIC_EnableIRQ(RTC_IRQn);
+
+    RTC_SR |= RTC_SR_TCE_MASK; // turn ON RTC
+}
+
 int main() {
 
     MCUInit();
     PortsInit();
     PinInit();
     UART5Init();
+    RTCInit();
+
+    Delay(500);
+
+    SendStr("=START=");
+    PRINT_NEWLINE();
 
     while (1) {
 
-        Beep();
-        SendStr("=======\r\n");
+        SendStr("=======");
+        PRINT_NEWLINE();
 
         ReceiveStr();
         PRINT_NEWLINE();
 
-        SendStr(buffer);
-        PRINT_NEWLINE();
+        if(strcmp(buffer,"Beep")==0) {
+
+            SendStr("==BEEP ON==");
+            PRINT_NEWLINE();
+        }
+        else {
+            SendStr(buffer);
+            PRINT_NEWLINE();
+        }
 
     }
 
