@@ -20,6 +20,11 @@
     SendStr("\r\n"); \
 }
 
+#define PRINT(msg) { \
+    SendStr(msg); \
+    SendStr("\r\n"); \
+}
+
 // Mapping of LEDs and buttons to specific port pins:
 // Note: only D9, SW3 and SW5 are used in this sample app
 
@@ -108,6 +113,8 @@ void ReceiveStr() {
     }
 
     buffer[i] = '\0'; // char 101 is \0
+
+    PRINT_NEWLINE();
 }
 
 // MCU initialization
@@ -202,7 +209,8 @@ void RTCInit () {
     RTC_SR &= ~RTC_SR_TCE_MASK; // turn OFF RTC
 
     RTC_TSR = 10U;
-    RTC_TAR = RTC_TSR+3U;
+    RTC_TAR = 0U;
+    //RTC_TAR = RTC_TSR+3U;
 
     RTC_IER |= RTC_IER_TAIE_MASK;
 
@@ -210,6 +218,46 @@ void RTCInit () {
     NVIC_EnableIRQ(RTC_IRQn);
 
     RTC_SR |= RTC_SR_TCE_MASK; // turn ON RTC
+}
+
+void Lights(int idx) {
+    if (idx == 1) {
+        ;
+    }
+    else if (idx == 2) {
+        ;
+    }
+    else if (idx == 3) {
+        ;
+    }
+}
+
+void Music(int idx) {
+    if (idx == 1) { // interrupted beeping -> 15times beep+pause
+        for(unsigned int i=0; i<15; i++) {
+            Beep();
+            Delay(70000);
+        }
+    }
+    else if (idx == 2) { // non interrupted beeping -> one long beeeeeeeeeeeeep
+        for(unsigned int i=0; i<20; i++) {
+            Beep();
+        }
+    }
+    else if (idx == 3) { // buzzer -> (pi-pi-pi-pi) (silence) (pi-pi-pi-pi) (silence) (pi-pi-pi-pi)
+        for(unsigned int i=0; i<3; i++) {
+
+            Beep();
+            Delay(90000);
+            Beep();
+            Delay(90000);
+            Beep();
+            Delay(90000);
+            Beep();
+
+            Delay(2000000); // propably 1 second silence
+        }
+    }
 }
 
 int main() {
@@ -222,27 +270,38 @@ int main() {
 
     Delay(500);
 
-    SendStr("=START=");
     PRINT_NEWLINE();
+    PRINT_NEWLINE();
+    PRINT("=======[ BEGIN ]=======");
 
     while (1) {
 
-        SendStr("=======");
-        PRINT_NEWLINE();
-
         ReceiveStr();
-        PRINT_NEWLINE();
 
-        if(strcmp(buffer,"Beep")==0) {
-
-            SendStr("==BEEP ON==");
-            PRINT_NEWLINE();
+        // Music
+        if(strcmp(buffer,"B1")==0) {
+            Music(1);
         }
-        else {
-            SendStr(buffer);
-            PRINT_NEWLINE();
+        else if(strcmp(buffer,"B2")==0) {
+            Music(2);
+        }
+        else if(strcmp(buffer,"B3")==0) {
+            Music(3);
         }
 
+        // Lights
+        if(strcmp(buffer,"L1")==0) {
+            Lights(1);
+        }
+        else if(strcmp(buffer,"L2")==0) {
+            Lights(2);
+        }
+        else if(strcmp(buffer,"L3")==0) {
+            Lights(3);
+        }
+
+        PRINT(buffer);
+        PRINT("=======================");
     }
 
     return 0;
