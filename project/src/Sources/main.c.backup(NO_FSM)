@@ -7,14 +7,14 @@
 //#################################################################################################
 
 #include "MK60D10.h"
-#include <stdio.h>
-#include <time.h>
 #include <string.h>
-#include <stdbool.h>
+#include <time.h>
 
 //#################################################################################################
 //#################################################################################################
 //#################################################################################################
+
+#define BUFFER_SIZE 101
 
 #define PRINT_NEWLINE() { \
     SendStr("\r\n"); \
@@ -25,7 +25,8 @@
     SendStr("\r\n"); \
 }
 
-#define BUFFER_SIZE 101
+// Mapping of LEDs and buttons to specific port pins:
+// Note: only D9, SW3 and SW5 are used in this sample app
 
 #define LED_D9  0x20 // Port B, bit 5
 #define LED_D10 0x10 // Port B, bit 4
@@ -36,53 +37,17 @@
 //#################################################################################################
 //#################################################################################################
 
-enum State {
-    INITIALIZATION,
-    ACTIVE
-};
-
-unsigned long long int seconds;
-char time_buffer[BUFFER_SIZE];
-char buffer[BUFFER_SIZE];
+unsigned char buffer[BUFFER_SIZE];
 
 //#################################################################################################
 //#################################################################################################
 //#################################################################################################
 
-// Convert time FROM seconds TO buffer
-void time_convert() {
-    time_t tmp = seconds;
-    struct tm ts = *localtime(&tmp);
-
+// Reset buffer[BUFFER_SIZE]
+void ResetBuffer() {
     for (unsigned int i=0; i<BUFFER_SIZE; i++) {
-        time_buffer[i]='\0';
+        buffer[i]='\0';
     }
-
-    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", &ts);
-}
-
-// Convert time FROM buffer TO seconds
-bool time_load() {
-    int retval;
-    struct tm t;
-
-    retval = strlen(time_buffer);
-    if (retval < 14 || 19 < retval) return false;
-
-    retval = sscanf(time_buffer, "%d-%d-%d %d:%d:%d", &t.tm_year, &t.tm_mon , &t.tm_mday, &t.tm_hour, &t.tm_min , &t.tm_sec);
-    if (retval != 6) return false;
-
-    if (t.tm_year < 1970 || 2038 < t.tm_year) return false;
-    if (t.tm_mon  < 1    || 12   < t.tm_mon ) return false;
-    if (t.tm_mday < 1    || 31   < t.tm_mday) return false;
-    if (t.tm_hour < 0    || 23   < t.tm_hour) return false;
-    if (t.tm_min  < 0    || 59   < t.tm_min ) return false;
-    if (t.tm_sec  < 0    || 59   < t.tm_sec ) return false;
-
-    t.tm_year = t.tm_year - 1900;
-    seconds = (long)mktime(&t);
-
-    return true;
 }
 
 // Delay
@@ -126,9 +91,7 @@ void ReceiveStr() {
     unsigned char c;
     unsigned int i = 0;
 
-    for (unsigned int i=0; i<BUFFER_SIZE; i++) {
-        buffer[i]='\0';
-    }
+    ResetBuffer();
 
     while (i < (BUFFER_SIZE - 1) ) { // receive 100 chars
 
@@ -336,66 +299,38 @@ int main() {
 
     Delay(500);
 
-    int S = INITIALIZATION;
-    bool retval;
-    PRINT("Please, initialize the machine with the current date in format \"YYYY-MM-DD HH:MM:SS\".");
+    PRINT_NEWLINE();
+    PRINT_NEWLINE();
+    PRINT("=======[ BEGIN ]=======");
 
     while (1) {
 
-        switch(S) {
-            //=================================================================
-            case INITIALIZATION:
+        ReceiveStr();
 
-                ReceiveStr();
-
-                strcpy(time_buffer,buffer);
-                retval = time_load();
-
-                if (retval == true) {
-                    PRINT("Initialization was successful.");
-                    PRINT_NEWLINE();
-                    S = ACTIVE;
-                }
-                else {
-                    PRINT("Something went wrong, please, repeat the initialization process.");
-                    PRINT("Initialize the machine with the current date in format \"YYYY-MM-DD HH:MM:SS\"!");
-                }
-
-                break;
-            //=================================================================
-            case ACTIVE:
-
-                ReceiveStr();
-                PRINT(buffer);
-
-                // Music
-                if(strcmp(buffer,"B1")==0) {
-                    Music(1);
-                }
-                else if(strcmp(buffer,"B2")==0) {
-                    Music(2);
-                }
-                else if(strcmp(buffer,"B3")==0) {
-                    Music(3);
-                }
-
-                // Lights
-                if(strcmp(buffer,"L1")==0) {
-                    Lights(1);
-                }
-                else if(strcmp(buffer,"L2")==0) {
-                    Lights(2);
-                }
-                else if(strcmp(buffer,"L3")==0) {
-                    Lights(3);
-                }
-
-                break;
-            //=================================================================
-            default:
-                break;
+        // Music
+        if(strcmp(buffer,"B1")==0) {
+            Music(1);
+        }
+        else if(strcmp(buffer,"B2")==0) {
+            Music(2);
+        }
+        else if(strcmp(buffer,"B3")==0) {
+            Music(3);
         }
 
+        // Lights
+        if(strcmp(buffer,"L1")==0) {
+            Lights(1);
+        }
+        else if(strcmp(buffer,"L2")==0) {
+            Lights(2);
+        }
+        else if(strcmp(buffer,"L3")==0) {
+            Lights(3);
+        }
+
+        PRINT(buffer);
+        PRINT("=======================");
     }
 
     return 0;
