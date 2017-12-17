@@ -33,12 +33,6 @@
 #define LED_D11 0x8  // Port B, bit 3
 #define LED_D12 0x4  // Port B, bit 2
 
-#define BTN_SW2 0x400     // Port E, bit 10
-#define BTN_SW3 0x1000    // Port E, bit 12
-#define BTN_SW4 0x8000000 // Port E, bit 27
-#define BTN_SW5 0x4000000 // Port E, bit 26
-#define BTN_SW6 0x800     // Port E, bit 11
-
 //#################################################################################################
 //#################################################################################################
 //#################################################################################################
@@ -150,10 +144,10 @@ void PortsInit() {
     PORTA->PCR[4] = PORT_PCR_MUX(0x01);
 
     // PORT B
-    PORTB->PCR[5] = PORT_PCR_MUX(0x01); // D9
-    PORTB->PCR[4] = PORT_PCR_MUX(0x01); // D10
-    PORTB->PCR[3] = PORT_PCR_MUX(0x01); // D11
-    PORTB->PCR[2] = PORT_PCR_MUX(0x01); // D12
+    PORTB->PCR[5] = PORT_PCR_MUX(0x01); // D9  LED
+    PORTB->PCR[4] = PORT_PCR_MUX(0x01); // D10 LED
+    PORTB->PCR[3] = PORT_PCR_MUX(0x01); // D11 LED
+    PORTB->PCR[2] = PORT_PCR_MUX(0x01); // D12 LED
 
     // PORT E
     PORTE->PCR[8]  = PORT_PCR_MUX(0x03); // UART0_TX
@@ -215,13 +209,56 @@ void RTCInit () {
 
 void Lights(int idx) {
     if (idx == 1) {
-        ;
+        for(unsigned int i=0; i<20; i++) { // all leds flashing
+
+            PTB->PDOR &= ~GPIO_PDOR_PDO(0x3C);
+            Delay(300000);
+            PTB->PDOR |= GPIO_PDOR_PDO(0x3C);
+            Delay(300000);
+
+        }
     }
     else if (idx == 2) {
-        ;
+        for(unsigned int i=0; i<10; i++) { // leds are one by one flashing
+
+            GPIOB_PDOR ^= LED_D12;
+            PTB->PDOR &= ~GPIO_PDOR_PDO(0x1);
+            Delay(300000);
+            PTB->PDOR |= GPIO_PDOR_PDO(0x3C);
+
+            GPIOB_PDOR ^= LED_D11;
+            PTB->PDOR &= ~GPIO_PDOR_PDO(0x1);
+            Delay(300000);
+            PTB->PDOR |= GPIO_PDOR_PDO(0x3C);
+
+            GPIOB_PDOR ^= LED_D10;
+            PTB->PDOR &= ~GPIO_PDOR_PDO(0x1);
+            Delay(300000);
+            PTB->PDOR |= GPIO_PDOR_PDO(0x3C);
+
+            GPIOB_PDOR ^= LED_D9;
+            PTB->PDOR &= ~GPIO_PDOR_PDO(0x1);
+            Delay(300000);
+            PTB->PDOR |= GPIO_PDOR_PDO(0x3C);
+
+        }
     }
     else if (idx == 3) {
-        ;
+        for(unsigned int i=0; i<10; i++) { // flashing two edges leds and two middle
+
+            GPIOB_PDOR ^= (LED_D12 | LED_D9);
+            PTB->PDOR &= ~GPIO_PDOR_PDO(0x1);
+            Delay(300000);
+            PTB->PDOR |= GPIO_PDOR_PDO(0x3C);
+            Delay(300000);
+
+            GPIOB_PDOR ^= (LED_D10 | LED_D11);
+            PTB->PDOR &= ~GPIO_PDOR_PDO(0x1);
+            Delay(300000);
+            PTB->PDOR |= GPIO_PDOR_PDO(0x3C);
+            Delay(300000);
+
+        }
     }
 }
 
