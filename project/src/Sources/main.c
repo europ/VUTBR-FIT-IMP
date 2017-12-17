@@ -124,16 +124,6 @@ void MCUInit() {
     WDOG_STCTRLH &= ~WDOG_STCTRLH_WDOGEN_MASK; // turn off watchdog
 }
 
-// MCU pin initialization
-void PinInit() {
-    SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
-    SIM->SCGC1 |= SIM_SCGC1_UART5_MASK;
-    PORTE->PCR[8] = ( 0 | PORT_PCR_MUX(0x03) ); // UART0_TX
-    PORTE->PCR[9] = ( 0 | PORT_PCR_MUX(0x03) ); // UART0_RX
-    PORTA->PCR[4] = ( 0 | PORT_PCR_MUX(0x01) );
-    PTA->PDDR = GPIO_PDDR_PDD( 0x0010 );
-}
-
 // UART initialization
 void UART5Init() {
     UART5->C2  &= ~(UART_C2_TE_MASK | UART_C2_RE_MASK);
@@ -150,29 +140,32 @@ void UART5Init() {
 
 // Port initialization
 void PortsInit() {
-    // Turn on all port clocks
-    SIM->SCGC5 =
-        SIM_SCGC5_PORTA_MASK |
-        SIM_SCGC5_PORTB_MASK |
-        SIM_SCGC5_PORTC_MASK |
-        SIM_SCGC5_PORTD_MASK |
-        SIM_SCGC5_PORTE_MASK ;
 
-    SIM->SCGC6 = SIM_SCGC6_RTC_MASK; // RTC's clock
+    // Enable CLOCKs for: UART5, RTC, PORT-A, PORT-B, PORT-E
+    SIM->SCGC1 = SIM_SCGC1_UART5_MASK;
+    SIM->SCGC5 = SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTE_MASK;
+    SIM->SCGC6 = SIM_SCGC6_RTC_MASK;
 
-    // Set corresponding PTB pins (connected to LED's) for GPIO functionality
+    // PORT A
+    PORTA->PCR[4] = PORT_PCR_MUX(0x01);
+
+    // PORT B
     PORTB->PCR[5] = PORT_PCR_MUX(0x01); // D9
     PORTB->PCR[4] = PORT_PCR_MUX(0x01); // D10
     PORTB->PCR[3] = PORT_PCR_MUX(0x01); // D11
     PORTB->PCR[2] = PORT_PCR_MUX(0x01); // D12
 
+    // PORT E
+    PORTE->PCR[8]  = PORT_PCR_MUX(0x03); // UART0_TX
+    PORTE->PCR[9]  = PORT_PCR_MUX(0x03); // UART0_RX
     PORTE->PCR[10] = PORT_PCR_MUX(0x01); // SW2
     PORTE->PCR[12] = PORT_PCR_MUX(0x01); // SW3
     PORTE->PCR[27] = PORT_PCR_MUX(0x01); // SW4
     PORTE->PCR[26] = PORT_PCR_MUX(0x01); // SW5
     PORTE->PCR[11] = PORT_PCR_MUX(0x01); // SW6
 
-    // Change corresponding PTB port pins as outputs
+    // set ports as output
+    PTA->PDDR =  GPIO_PDDR_PDD(0x0010);
     PTB->PDDR =  GPIO_PDDR_PDD(0x3C);
     PTB->PDOR |= GPIO_PDOR_PDO(0x3C); // turn all LEDs OFF
 }
@@ -264,7 +257,6 @@ int main() {
 
     MCUInit();
     PortsInit();
-    PinInit();
     UART5Init();
     RTCInit();
 
