@@ -8,8 +8,9 @@
 #define BUFFER_SIZE 101
 
 char time_buffer[BUFFER_SIZE];
-unsigned long long int seconds;
+unsigned int seconds;
 
+/*
 // Convert time FROM seconds TO buffer
 void time_convert() {
     time_t tmp = seconds;
@@ -28,25 +29,29 @@ bool time_load() {
     return true;
 }
 
+*/
+
+
+// Convert time FROM unsigned int TO char
+void time_convert(unsigned int* src, char* dest) {
+    time_t tmp = *src;
+    struct tm ts = *localtime(&tmp);
+    for (unsigned int i=0; i<BUFFER_SIZE; i++) {
+        dest[i]='\0';
+    }
+    strftime(dest, BUFFER_SIZE, "%Y-%m-%d %H:%M:%S", &ts);
+}
+
 int main(void) {
 
-    seconds = (unsigned long long int)time(NULL);
+    seconds = time(NULL);
 
     fprintf(stdout, "BUFFER     ==>%s<==\n", time_buffer);
-    fprintf(stdout, "SECONDS    ==>%lld<==\n", seconds);
+    fprintf(stdout, "SECONDS    ==>%d<==\n", seconds);
     fprintf(stdout, "time_convert();\n");
-    time_convert();
+    time_convert(&seconds, time_buffer);
     fprintf(stdout, "BUFFER     ==>%s<==\n", time_buffer);
-    fprintf(stdout, "SECONDS    ==>%lld<==\n", seconds);
-
-    fprintf(stdout, "\n");
-
-    fprintf(stdout, "BUFFER     ==>%s<==\n", time_buffer);
-    fprintf(stdout, "SECONDS    ==>%lld<==\n", seconds);
-    fprintf(stdout, "time_load();\n");
-    time_load();
-    fprintf(stdout, "BUFFER     ==>%s<==\n", time_buffer);
-    fprintf(stdout, "SECONDS    ==>%lld<==\n", seconds);
+    fprintf(stdout, "SECONDS    ==>%d<==\n", seconds);
 
     return 0;
 }
