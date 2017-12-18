@@ -16,40 +16,6 @@
 //#################################################################################################
 //#################################################################################################
 
-#define PRINT_TSR() { \
-    seconds_tmp = RTC_TSR; \
-    sprintf(buffer, "TSR = %d", seconds_tmp); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    time_convert(&seconds_tmp, buffer); \
-    SendStr("TSR = "); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-}
-
-#define PRINT_BUFF() { \
-    SendStr("BUFFER = "); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-}
-
-#define DEBUG() { \
-    SendStr("================================================\r\n"); \
-    sprintf(buffer, "SONG   = %d", song); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    sprintf(buffer, "LIGHT  = %d", light); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    sprintf(buffer, "DELAY  = %d", delay); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    sprintf(buffer, "REPEAT = %d", repeat_count); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    SendStr("================================================\r\n"); \
-}
-
 #define PRINT_NEWLINE() { \
     SendStr("\r\n"); \
 }
@@ -57,12 +23,6 @@
 #define PRINT(msg) { \
     SendStr(msg); \
     SendStr("\r\n"); \
-}
-
-#define TIME_LOAD_ERROR(msg) { \
-    SendStr(msg); \
-    SendStr("\r\n"); \
-    return false; \
 }
 
 #define BUFFER_SIZE 101
@@ -77,28 +37,53 @@
 //#################################################################################################
 
 enum State {
-    INITIALIZATION,  // 1
-    SELECTION_MUSIC, // 2
-    SELECTION_LIGHT, // 3
-    REPEAT,          // 4
-    DELAY,           // 5
-    SET_ALARM,       // 6
-    ACTIVE           // 7
+    INITIALIZATION,
+    ACTIVE
 };
 
+unsigned long long int seconds;
+char time_buffer[BUFFER_SIZE];
 char buffer[BUFFER_SIZE];
-unsigned int seconds_init;
-unsigned int seconds_alarm;
-unsigned int seconds_tmp;
-
-int song;
-int light;
-int repeat_count;
-int delay;
 
 //#################################################################################################
 //#################################################################################################
 //#################################################################################################
+
+// Convert time FROM seconds TO buffer
+void time_convert() {
+    time_t tmp = seconds;
+    struct tm ts = *localtime(&tmp);
+
+    for (unsigned int i=0; i<BUFFER_SIZE; i++) {
+        time_buffer[i]='\0';
+    }
+
+    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", &ts);
+}
+
+// Convert time FROM buffer TO seconds
+bool time_load() {
+    int retval;
+    struct tm t;
+
+    retval = strlen(time_buffer);
+    if (retval < 14 || 19 < retval) return false;
+
+    retval = sscanf(time_buffer, "%d-%d-%d %d:%d:%d", &t.tm_year, &t.tm_mon , &t.tm_mday, &t.tm_hour, &t.tm_min , &t.tm_sec);
+    if (retval != 6) return false;
+
+    if (t.tm_year < 1970 || 2038 < t.tm_year) return false;
+    if (t.tm_mon  < 1    || 12   < t.tm_mon ) return false;
+    if (t.tm_mday < 1    || 31   < t.tm_mday) return false;
+    if (t.tm_hour < 0    || 23   < t.tm_hour) return false;
+    if (t.tm_min  < 0    || 59   < t.tm_min ) return false;
+    if (t.tm_sec  < 0    || 59   < t.tm_sec ) return false;
+
+    t.tm_year = t.tm_year - 1900;
+    seconds = (long)mktime(&t);
+
+    return true;
+}
 
 // Delay
 void Delay(unsigned long long int bound) {
@@ -161,55 +146,6 @@ void ReceiveStr() {
     buffer[i] = '\0'; // char 101 is \0
 
     PRINT_NEWLINE();
-}
-
-// Convert time FROM unsigned int TO char
-void time_convert(unsigned int* src, char* dest) {
-    time_t tmp = *src;
-    struct tm ts = *localtime(&tmp);
-    for (unsigned int i=0; i<BUFFER_SIZE; i++) {
-        dest[i]='\0';
-    }
-    strftime(dest, BUFFER_SIZE, "%Y-%m-%d %H:%M:%S", &ts);
-}
-
-// Convert time FROM char TO unsigned int
-bool time_load(char* src, unsigned int* dest) {
-    int retval;
-    struct tm t;
-
-    retval = strlen(src);
-    if (retval < 14 || 19 < retval) TIME_LOAD_ERROR("Wrong length!");
-
-    retval = sscanf(src, "%d-%d-%d %d:%d:%d", &t.tm_year, &t.tm_mon , &t.tm_mday, &t.tm_hour, &t.tm_min , &t.tm_sec);
-    if (retval != 6) TIME_LOAD_ERROR("Wrong format!");
-
-    // date YYYY-MM-DD
-    if (t.tm_year < 1970 || 2038 < t.tm_year) TIME_LOAD_ERROR("Wrong year!");
-    if (t.tm_mon  < 1    || 12   < t.tm_mon ) TIME_LOAD_ERROR("Wrong month!");
-
-    // JAN,MAR,MAY,JUL,AUG,OCT,DEC
-    if (t.tm_mon==1 || t.tm_mon==3 || t.tm_mon==5 || t.tm_mon==7 || t.tm_mon==8 || t.tm_mon==10 || t.tm_mon==12) {
-        if (t.tm_mday < 1 || 31 < t.tm_mday) TIME_LOAD_ERROR("Wrong day!");
-    }
-    // APR,JUN,SEP,NOV
-    if (t.tm_mon==4 || t.tm_mon==6 || t.tm_mon==9 || t.tm_mon==11) {
-        if (t.tm_mday < 1 || 30 < t.tm_mday) TIME_LOAD_ERROR("Wrong day!");
-    }
-    // FEB
-    if (t.tm_mon==2) {
-        if (t.tm_mday < 1 || 29 < t.tm_mday) TIME_LOAD_ERROR("Wrong day!");
-    }
-
-    // time HH:MM:SS
-    if (t.tm_hour < 0    || 23   < t.tm_hour) TIME_LOAD_ERROR("Wrong hour!");
-    if (t.tm_min  < 0    || 59   < t.tm_min ) TIME_LOAD_ERROR("Wrong minute!");
-    if (t.tm_sec  < 0    || 59   < t.tm_sec ) TIME_LOAD_ERROR("Wrong second!");
-
-    t.tm_year = t.tm_year - 1900;
-    *dest = (long)mktime(&t);
-
-    return true;
 }
 
 // MCU initialization
@@ -296,8 +232,9 @@ void RTCInit () {
 
     RTC_SR &= ~RTC_SR_TCE_MASK; // turn OFF RTC
 
-    RTC_TSR = 0x00000000; // MIN value in 32bit register
-    RTC_TAR = 0xFFFFFFFF; // MAX value in 32bit register
+    RTC_TSR = 10U;
+    RTC_TAR = 0U;
+    //RTC_TAR = RTC_TSR+3U;
 
     RTC_IER |= RTC_IER_TAIE_MASK;
 
@@ -401,6 +338,7 @@ int main() {
 
     int S = INITIALIZATION;
     bool retval;
+    PRINT("Please, initialize the machine with the current date in format \"YYYY-MM-DD HH:MM:SS\".");
 
     while (1) {
 
@@ -408,36 +346,29 @@ int main() {
             //=================================================================
             case INITIALIZATION:
 
-                PRINT("Enter date & time in format \"YYYY-MM-DD HH:MM:SS\".");
-
                 ReceiveStr();
 
-                retval = time_load(buffer, &seconds_init);
+                strcpy(time_buffer,buffer);
+                retval = time_load();
 
                 if (retval == true) {
-                    RTC_SR &= ~RTC_SR_TCE_MASK; // turn OFF RTC
-                    RTC_TSR = seconds_init;
-                    RTC_SR |= RTC_SR_TCE_MASK; // turn ON RTC
                     PRINT("Initialization was successful.");
-                    PRINT("============================");
-                    S = SELECTION_MUSIC;
-
-    PRINT_TSR();
-
+                    PRINT_NEWLINE();
+                    S = ACTIVE;
                 }
                 else {
-                    PRINT("Please, repeat the initialization process.");
+                    PRINT("Something went wrong, please, repeat the initialization process.");
+                    PRINT("Initialize the machine with the current date in format \"YYYY-MM-DD HH:MM:SS\"!");
                 }
 
-            break;
+                break;
             //=================================================================
-            case SELECTION_MUSIC:
-
-                PRINT("Choose music, type \"[1-3]\".");
-                PRINT("You can preview music, type \"B[1-3]\".");
+            case ACTIVE:
 
                 ReceiveStr();
+                PRINT(buffer);
 
+                // Music
                 if(strcmp(buffer,"B1")==0) {
                     Music(1);
                 }
@@ -447,31 +378,8 @@ int main() {
                 else if(strcmp(buffer,"B3")==0) {
                     Music(3);
                 }
-                else if(strcmp(buffer,"1")==0) {
-                    song = 1;
-                    PRINT("============================");
-                    S = SELECTION_LIGHT;
-                }
-                else if(strcmp(buffer,"2")==0) {
-                    song = 2;
-                    PRINT("============================");
-                    S = SELECTION_LIGHT;
-                }
-                else if(strcmp(buffer,"3")==0) {
-                    song = 3;
-                    PRINT("============================");
-                    S = SELECTION_LIGHT;
-                }
 
-            break;
-            //=================================================================
-            case SELECTION_LIGHT:
-
-                PRINT("Choose light, type \"[1-3]\".");
-                PRINT("You can preview light, type \"L[1-3]\".");
-
-                ReceiveStr();
-
+                // Lights
                 if(strcmp(buffer,"L1")==0) {
                     Lights(1);
                 }
@@ -481,130 +389,14 @@ int main() {
                 else if(strcmp(buffer,"L3")==0) {
                     Lights(3);
                 }
-                else if(strcmp(buffer,"1")==0) {
-                    light = 1;
-                    PRINT("============================");
-                    S = REPEAT;
-                }
-                else if(strcmp(buffer,"2")==0) {
-                    light = 2;
-                    PRINT("============================");
-                    S = REPEAT;
-                }
-                else if(strcmp(buffer,"3")==0) {
-                    light = 3;
-                    PRINT("============================");
-                    S = REPEAT;
-                }
 
-            break;
-            //=================================================================
-            case REPEAT:
-
-                PRINT("Enter count of alarm repetition (MIN=1, MAX=20).");
-
-                ReceiveStr();
-
-                retval = sscanf(buffer,"%d", &repeat_count);
-                if (retval == 1) {
-                    if (repeat_count < 1 || 20 < repeat_count) {
-                        PRINT("Wrong count!");
-                    }
-                    else {
-                        PRINT("============================");
-                        S = DELAY;
-                    }
-                }
-                else {
-                    PRINT("Wrong count!");
-                }
-
-            break;
-            //=================================================================
-            case DELAY:
-
-                PRINT("Enter delay in seconds between alarm repetition (MIN=10, MAX=30).");
-
-                ReceiveStr();
-
-                retval = sscanf(buffer,"%d", &delay);
-                if (retval == 1) {
-                    if (delay < 10 || 30 < delay) {
-                        PRINT("Wrong delay!");
-                    }
-                    else {
-                        PRINT("============================");
-                        S = SET_ALARM;
-                    }
-                }
-                else {
-                    PRINT("Wrong delay!");
-                }
-
-            break;
-            //=================================================================
-            case SET_ALARM:
-
-                PRINT("Enter ALARM date & time in format \"YYYY-MM-DD HH:MM:SS\".");
-
-                SendStr("Current date & time: ");
-                seconds_tmp = RTC_TSR;
-                time_convert(&seconds_tmp, buffer);
-                PRINT(buffer);
-
-                ReceiveStr();
-
-                retval = time_load(buffer, &seconds_alarm);
-                if ((retval == true) && (RTC_TSR < seconds_alarm)) {
-                    RTC_TAR = seconds_alarm;
-                    PRINT("ALARM initialization was successful.");
-                    PRINT("============================");
-                    S = ACTIVE;
-                }
-                else {
-                    PRINT("Please, repeat the ALARM initialization process.");
-                }
-
-            break;
-            //=================================================================
-            case ACTIVE:
-
-        PRINT_TSR();
-
-                SendStr("Current date & time: ");
-                seconds_tmp = RTC_TSR;
-                time_convert(&seconds_tmp, buffer);
-                PRINT(buffer);
-
-                SendStr("Alarm   date & time: ");
-                time_convert(&seconds_alarm, buffer);
-                PRINT(buffer);
-
-                ReceiveStr();
-                PRINT("===============");
-
-            break;
+                break;
             //=================================================================
             default:
-            break;
+                break;
         }
 
-
     }
-
-    /*
-        PRINT("===========");
-
-        seconds_tmp = RTC_TSR;
-        sprintf(buffer, "seconds_tmp = %d", seconds_tmp);
-        PRINT(buffer);
-
-        time_convert(&seconds_tmp, buffer);
-
-        PRINT_BUFF();
-
-        Delay(3000000);//1s
-*/
 
     return 0;
 }
