@@ -77,13 +77,14 @@
 //#################################################################################################
 
 enum State {
-    INITIALIZATION,  // 1
-    SELECTION_MUSIC, // 2
-    SELECTION_LIGHT, // 3
-    REPEAT,          // 4
-    DELAY,           // 5
-    SET_ALARM,       // 6
-    ACTIVE           // 7
+    INIT,   // 1 - start state
+    MUSIC,  // 2
+    LIGHT,  // 3
+    REPEAT, // 4
+    DELAY,  // 5
+    ALARM,  // 6
+    ACTIVE, // 7
+    HALT    // 8 - final state
 };
 
 char buffer[BUFFER_SIZE];
@@ -217,14 +218,14 @@ bool time_load(char* src, unsigned int* dest) {
     return true;
 }
 
-// MCU initialization
+// MCU INIT
 void MCUInit() {
     MCG_C4 |= ( MCG_C4_DMX32_MASK | MCG_C4_DRST_DRS(0x01) );
     SIM_CLKDIV1 |= SIM_CLKDIV1_OUTDIV1(0x00);
     WDOG_STCTRLH &= ~WDOG_STCTRLH_WDOGEN_MASK; // turn off watchdog
 }
 
-// UART initialization
+// UART INIT
 void UART5Init() {
     UART5->C2  &= ~(UART_C2_TE_MASK | UART_C2_RE_MASK);
     UART5->BDH =  0x00;
@@ -238,7 +239,7 @@ void UART5Init() {
     UART5->C2  |= ( UART_C2_TE_MASK | UART_C2_RE_MASK ); // Zapnout vysilac i prijimac
 }
 
-// Port initialization
+// Port INIT
 void PortsInit() {
 
     // Enable CLOCKs for: UART5, RTC, PORT-A, PORT-B, PORT-E
@@ -413,14 +414,14 @@ int main() {
 
     Delay(500);
 
-    int S = INITIALIZATION;
+    int S = INIT;
     bool retval;
 
     while (1) {
 
         switch(S) {
             //=================================================================
-            case INITIALIZATION:
+            case INIT:
 
                 PRINT("Enter date & time in format \"YYYY-MM-DD HH:MM:SS\".");
 
@@ -434,18 +435,18 @@ int main() {
                     RTC_SR |= RTC_SR_TCE_MASK; // turn ON RTC
                     PRINT("Success.");
                     PRINT("============================");
-                    S = SELECTION_MUSIC;
+                    S = MUSIC;
                 }
                 else {
-                    PRINT("Please, repeat the initialization process.");
+                    PRINT("Please, repeat the INIT process.");
                 }
 
             break;
             //=================================================================
-            case SELECTION_MUSIC:
+            case MUSIC:
 
                 PRINT("Choose music, type \"[1-3]\".");
-                PRINT("You can preview music, type \"B[1-3]\".");
+                PRINT("You can try out music types, type \"B[1-3]\".");
 
                 SendStr("Input: ");
                 ReceiveStr();
@@ -463,27 +464,27 @@ int main() {
                     song = 1;
                     PRINT("Success.");
                     PRINT("============================");
-                    S = SELECTION_LIGHT;
+                    S = LIGHT;
                 }
                 else if(strcmp(buffer,"2")==0) {
                     song = 2;
                     PRINT("Success.");
                     PRINT("============================");
-                    S = SELECTION_LIGHT;
+                    S = LIGHT;
                 }
                 else if(strcmp(buffer,"3")==0) {
                     song = 3;
                     PRINT("Success.");
                     PRINT("============================");
-                    S = SELECTION_LIGHT;
+                    S = LIGHT;
                 }
 
             break;
             //=================================================================
-            case SELECTION_LIGHT:
+            case LIGHT:
 
                 PRINT("Choose light, type \"[1-3]\".");
-                PRINT("You can preview light, type \"L[1-3]\".");
+                PRINT("You can try out light types, type \"L[1-3]\".");
 
                 SendStr("Input: ");
                 ReceiveStr();
@@ -545,7 +546,7 @@ int main() {
             //=================================================================
             case DELAY:
 
-                PRINT("Enter delay in seconds between alarm repetition (MIN=30, MAX=300).");
+                PRINT("Enter delay, in seconds, between alarm repetition (MIN=30, MAX=300).");
 
                 SendStr("Input: ");
                 ReceiveStr();
@@ -558,7 +559,7 @@ int main() {
                     else {
                         PRINT("Success.");
                         PRINT("============================");
-                        S = SET_ALARM;
+                        S = ALARM;
                     }
                 }
                 else {
@@ -567,7 +568,7 @@ int main() {
 
             break;
             //=================================================================
-            case SET_ALARM:
+            case ALARM:
 
                 PRINT("Enter ALARM date & time in format \"YYYY-MM-DD HH:MM:SS\".");
 
@@ -587,7 +588,7 @@ int main() {
                     S = ACTIVE;
                 }
                 else {
-                    PRINT("Please, repeat the ALARM initialization process.");
+                    PRINT("Please, repeat the ALARM INIT process.");
                 }
 
             break;
@@ -616,7 +617,7 @@ int main() {
                     while(1);
                 }
                 else if(strcmp(buffer,"reboot")==0) {
-                    S = INITIALIZATION;
+                    S = INIT;
                 }
                 else if(strcmp(buffer,"stop")==0) {
                     RTC_TAR = 0;

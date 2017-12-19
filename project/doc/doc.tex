@@ -96,7 +96,7 @@
             \indent V tomto kroku, t.j. po úspšnom inicializovaní času budíka, dostane užívateľ možnosť výberu zvukovej signalizácie. Poskytne sa mu možnosť výberu z troch zvukových variant. V termináli sa zobrazia správy
             \begin{center}
                 \texttt{Choose music, type "[1-3]".}\\
-                \texttt{You can preview music, type "B[1-3]".}
+                \texttt{You can try out music types, type "B[1-3]".}
             \end{center}
             ktoré umožnia predbežne prehrať zvukovú signalizáciu a jej výber podľa vhodnosti pre užívateľa. Užívateľ si môže prehrať tri dostupné zvukové signalizácie pomocou príkazov \textit{B1}, \textit{B2} a \textit{B3}. K nastaveniu vhodnej zvukovej signalizácie je potreba zadať len číslo a to \textit{1}, \textit{2} alebo \textit{3}. Ak nastane chyba, tak sa celý krok opakuje.
 
@@ -105,7 +105,7 @@
             \indent Po výbere zvukovej signalizácie je užívateľovy umožnený výber svetelnej signalizácie ktorý je podobný ku predošlému kroku. V termináli sa zobrazia správy
             \begin{center}
                 \texttt{Choose light, type "[1-3]".}\\
-                \texttt{You can preview light, type "L[1-3]".}
+                \texttt{You can try out light types, type "L[1-3]".}
             \end{center}
             ktoré umožnia predbežne spustit svetelnú signalizáciu a jej výber podľa vhodnosti pre užívateľa. Užívateľ si môže spustit tri dostupné svetelné signalizácie pomocou príkazov \textit{L1}, \textit{L2} a \textit{L3}. K nastaveniu vhodnej svetelnej signalizácie je potreba zadať len číslo a to \textit{1}, \textit{2} alebo \textit{3}. Ak nastane chyba, tak sa celý krok opakuje.
 
@@ -120,9 +120,9 @@
 
         \subsubsection{Nastavenie oneskorenia opakovaní}
 
-            \indent Tento krok žiada užívateľa aby zadal čas (v sekundách) od 30 do 300 sekúnd. Tento čas určuje dobu odkladu budíka ak sa jedná o opakovaný budík, t.j. užívateľ v predošlom kroku pri nastavovaní počtu opakovaní nezvolil číslo \textit{0}. V terminály sa zobrazia tieto správy
+            \indent Tento krok žiada užívateľa aby zadal čas (v sekundách) od 30 do 300 sekúnd. Tento čas určuje dobu odkladu budenia ak sa jedná o opakované budenie, t.j. užívateľ v predošlom kroku pri nastavovaní počtu opakovaní nezvolil číslo \textit{0}. V terminály sa zobrazia tieto správy
             \begin{center}
-                \texttt{Enter delay in seconds between alarm repetition (MIN=30, MAX=300).}
+                \texttt{Enter delay, in seconds, between alarm repetition (MIN=30, MAX=300).}
             \end{center}
             ktoré žiadajú užívateľa aby udal čas odkladu v sekundách pričom minimálny čas je 30 sekúnd a maximálny 300 sekúnd (5 minút).
 
@@ -146,15 +146,15 @@
 
     \indent Celá implementácia sa nachádza v jednom súbore \textit{main.c}. Zdrojový kód sa člení na časti: makrá, globálne premenné, funkcie a na konci sa nachádza hlavná funckia \textit{main} ktorá obsahuje implementáciu končeného automatu zobrazeného v prílohe na obrázku číslo \ref{fig:fsm}.\\
 
-    \indent Zdrojový kód je členený do funkcii podľa jednlotlivých logických celkov. Spustením hlavnej funkcie \textit{main} sa na začiatku inicializuje \textit{MCU}, \textit{porty}, \textit{UART5} a \textit{RTC}. Následne sa spustí cyklus bez ukončovacej podmienky. V tomto cykle je naimplementovaný končný automat ktorý riadi celý proces, t.j. budík. Pomocou automatu sa nastavujú jednotlivé gloálne premenné, ku ktorým sa pristupuje z ostatných funkcii čo zjednodušuje prácu s predávaním parametrov ktorá nie je v tomto prípade potrebná. Funkcie pracujúce so vstupom a výstupom na terminál pracujú s premennou \textit{buffer} čo je pole znakov. Funkcie pracujúce s časom využívajú premenné začínajúce s predložkou \textit{seconds\_} ktoré sú typu \textit{unsigned int} pretože \textit{RTC} registre sú o veľkosti 32 bitov.
+    \indent Zdrojový kód je členený do funkcii podľa jednotlivých logických celkov. Spustením hlavnej funkcie \textit{main} sa na začiatku inicializuje \textit{MCU}, \textit{porty}, \textit{UART5} a \textit{RTC}. Následne sa spustí cyklus bez ukončovacej podmienky. V tomto cykle je naimplementovaný konečný automat ktorý riadi celý proces, t.j. budík. Pomocou automatu sa nastavujú jednotlivé globálne premenné, ku ktorým sa pristupuje z ostatných funkcii čo zjednodušuje prácu s predávaním parametrov ktorá nie je v tomto prípade potrebná. Funkcie pracujúce so vstupom a výstupom na terminál pracujú s premennou \textit{buffer} čo je pole znakov. Funkcie pracujúce s časom využívajú premenné začínajúce s predložkou \textit{seconds\_} ktoré sú typu \textit{unsigned int} pretože \textit{RTC} registre sú o veľkosti 32 bitov.
 
     \subsection{Zvuková a svetelná signalizácia}
 
-        \indent Všetky zvukové signalizácie sú naimplementované vo funkcii \textit{Music} a všetky sevetelné signalizácie vo funckii \textit{Lights}. V týchto funkciách sa pristupuje k trom druhom signalizáciám ktoré sa vyberajú na základe indexu ktorý je určený prislúchajúcou globálnou premennou.
+        \indent Všetky zvukové signalizácie sú naimplementované vo funkcii \textit{Music} a všetky sevetelné signalizácie vo funckii \textit{Lights}. V týchto funkciách sa pristupuje k trom druhom signalizácii ktoré sa vyberajú na základe indexu ktorý je určený prislúchajúcou globálnou premennou.
 
-    \subsection{RTC}
+    \subsection{RTC modul}
 
-        \indent Inicializáciu \textit{RTC} zabezpečuje funckia \textit{RTCInit} a obsluhu prerušenia od \textit{RTC} vykonáva funkcia \textit{RTC\_IRQHandler} v ktorej je naimplementovaná aj časť funkcionality budíka a to prenastavenie času odloženého budíka.
+        \indent Inicializáciu \textit{RTC} modulu zabezpečuje funckia \textit{RTCInit} a obsluhu prerušenia od \textit{RTC} vykonáva funkcia \textit{RTC\_IRQHandler} v ktorej je naimplementovaná aj časť funkcionality budíka a to prenastavenie času odloženého budíka.
   
 \newpage
 \section{Prílohy}
