@@ -363,27 +363,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e11" source="n5" target="n5">
-      <data key="d10">
-        <y:PolyLineEdge>
-          <y:Path sx="4.096000000000004" sy="41.84572803051606" tx="-27.317113375953113" ty="38.261728030516">
-            <y:Point x="366.4" y="589.6142783999999"/>
-          </y:Path>
-          <y:LineStyle color="#000000" type="line" width="1.0"/>
-          <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="54.0390625" x="-8.753997645428115" y="32.09594327483637">FAILURE<y:LabelModel>
-              <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
-            </y:LabelModel>
-            <y:ModelParameter>
-              <y:SmartEdgeLabelModelParameter angle="6.283185307179586" distance="2.5849855088687703" distanceToCenter="true" position="left" ratio="9.073888995930247" segment="-2"/>
-            </y:ModelParameter>
-            <y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/>
-          </y:EdgeLabel>
-          <y:BendStyle smoothed="false"/>
-        </y:PolyLineEdge>
-      </data>
-    </edge>
-    <edge id="e12" source="n6" target="n6">
+    <edge id="e11" source="n6" target="n6">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -403,7 +383,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e13" source="n4" target="n4">
+    <edge id="e12" source="n4" target="n4">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -423,7 +403,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e14" source="n0" target="n0">
+    <edge id="e13" source="n0" target="n0">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -443,7 +423,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e15" source="n1" target="n1">
+    <edge id="e14" source="n1" target="n1">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -463,7 +443,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e16" source="n2" target="n2">
+    <edge id="e15" source="n2" target="n2">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -483,7 +463,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e17" source="n5" target="n5">
+    <edge id="e16" source="n5" target="n5">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="46.67982516663369" sy="-20.424828563876304" tx="6.986886624046861" ty="-42.63427196948396">
@@ -503,7 +483,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e18" source="n5" target="n5">
+    <edge id="e17" source="n5" target="n5">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="7.055044064046683" sy="-42.22139516948323" tx="-20.79775593595332" ty="-38.944595169483364">
@@ -523,7 +503,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e19" source="n7" target="n0">
+    <edge id="e18" source="n7" target="n0">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="-105.84473193595085" sy="-269.58595196948227" tx="0.0" ty="0.0"/>
@@ -533,7 +513,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e20" source="n3" target="n6">
+    <edge id="e19" source="n3" target="n6">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -544,6 +524,27 @@
             </y:LabelModel>
             <y:ModelParameter>
               <y:SmartEdgeLabelModelParameter angle="6.283185307179586" distance="7.511519362874531" distanceToCenter="true" position="left" ratio="0.4952131344618186" segment="-1"/>
+            </y:ModelParameter>
+            <y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/>
+          </y:EdgeLabel>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e20" source="n5" target="n5">
+      <data key="d9"/>
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="362.304" y="596.3544000000002"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="54.0390625" x="15.459142137265587" y="57.841071784093856">FAILURE<y:LabelModel>
+              <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartEdgeLabelModelParameter angle="6.283185307179586" distance="0.8700774399999882" distanceToCenter="true" position="right" ratio="-7.880775787999937" segment="-1"/>
             </y:ModelParameter>
             <y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/>
           </y:EdgeLabel>
