@@ -380,7 +380,7 @@ void RTC_IRQHandler() {
     */
 }
 
-void RTCInit () {
+void RTCInit() {
 
     RTC_CR |= RTC_CR_SWR_MASK;  // SWR = 1, reset all RTC's registers
     RTC_CR &= ~RTC_CR_SWR_MASK; // SWR = 0

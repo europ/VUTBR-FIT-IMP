@@ -152,6 +152,9 @@
 
         \indent Všetky zvukové signalizácie sú naimplementované vo funkcii \textit{Music} a všetky sevetelné signalizácie vo funckii \textit{Lights}. V týchto funkciách sa pristupuje k trom druhom signalizáciám ktoré sa vyberajú na základe indexu ktorý je určený prislúchajúcou globálnou premennou.
 
+    \subsection{RTC}
+
+        \indent Inicializáciu \textit{RTC} zabezpečuje funckia \textit{RTCInit} a obsluhu prerušenia od \textit{RTC} vykonáva funkcia \textit{RTC\_IRQHandler} v ktorej je naimplementovaná aj časť funkcionality budíka a to prenastavenie času odloženého budíka.
   
 \newpage
 \section{Prílohy}
