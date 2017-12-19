@@ -1,0 +1,89 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[left=2cm,text={17cm,24cm},top=3cm]{geometry}
+\usepackage[bookmarksopen,colorlinks,plainpages=false,urlcolor=blue,unicode,linkcolor=blue]{hyperref}
+\usepackage[slovak]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{eurosym}
+\usepackage{float}
+\usepackage{url}
+
+\graphicspath{{.}}
+
+\begin{document}
+
+% #################################################################################################
+% TITLEPAGE
+
+\begin{titlepage}
+    \begin{center}
+        \Huge
+        \textsc{
+            Fakulta informačních technologií\\
+            Vysoké učení technické v~Brně
+        }
+        \vspace{100px}
+        \begin{figure}[!h]
+            \centering
+            \includegraphics[scale=0.3]{img/vutbr-fit-logo.eps}
+        \end{figure}
+        \\[20mm]
+        \huge{
+            \textbf{
+                IMP - Mikroprocesorové a vstavané systémy
+            }
+        }
+        \\[2em]
+        \LARGE{
+            \textbf{
+                Hodiny s budíkem na bázi modulu\\
+                Real Time Clock (RTC)
+            }
+        }
+        \vfill
+    \end{center}
+        \Large{
+            Adrián Tóth (xtotha01) \hfill \today
+        }
+
+\end{titlepage}
+
+% #################################################################################################
+% CONTENT
+
+\setlength{\parskip}{0pt}
+\hypersetup{hidelinks}\tableofcontents
+\setlength{\parskip}{0pt}
+
+\newpage %#########################################################################################
+
+\section{Úvod}
+
+    \indent A\cite{MANUAL}, B\cite{SCHEME}.
+
+  
+\newpage
+\section{Prílohy}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{img/fsm.eps}
+    \caption{Budík - Konečný automat}
+    \label{fig:fsm}
+\end{figure}
+
+\newpage %#########################################################################################
+
+\makeatletter
+\makeatother
+\bibliographystyle{czechiso}
+\begin{flushleft}
+    \bibliography{quotation}
+\end{flushleft}
+
+\end{document} %###################################################################################
+
+
