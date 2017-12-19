@@ -533,9 +533,14 @@ int main() {
                         PRINT("Wrong count!");
                     }
                     else {
+                        if (repeat_count == 0) {
+                            S = ALARM;
+                        }
+                        else {
+                            S = DELAY;
+                        }
                         PRINT("Success.");
                         PRINT("============================");
-                        S = DELAY;
                     }
                 }
                 else {
