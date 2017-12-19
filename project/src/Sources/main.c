@@ -206,8 +206,13 @@ bool time_load(char* src, unsigned int* dest) {
     if (t.tm_min  < 0    || 59   < t.tm_min ) TIME_LOAD_ERROR("Wrong minute!");
     if (t.tm_sec  < 0    || 59   < t.tm_sec ) TIME_LOAD_ERROR("Wrong second!");
 
-    t.tm_year = t.tm_year - 1900;
-    *dest = (long)mktime(&t);
+    t.tm_year  = t.tm_year - 1900;
+    t.tm_mon   = t.tm_mon - 1;
+    t.tm_isdst = -1;
+
+    time_t tmp;
+    tmp = mktime(&t);
+    *dest = (unsigned int)tmp;
 
     return true;
 }
@@ -263,48 +268,6 @@ void PortsInit() {
     PTA->PDDR =  GPIO_PDDR_PDD(0x0010);
     PTB->PDDR =  GPIO_PDDR_PDD(0x3C);
     PTB->PDOR |= GPIO_PDOR_PDO(0x3C); // turn all LEDs OFF
-}
-
-void RTC_IRQHandler() {
-    if(RTC_SR & RTC_SR_TAF_MASK) {
-        RTC_TAR = 0;
-        Beep();
-        SendStr("=======ALARM=======\r\n");
-        SendStr("Time Alarm Flag\r\n");
-    }
-/*
-    if(RTC_SR & RTC_SR_TOF_MASK) {
-        SendStr("Time Overflow Flag\r\n");
-    }
-    if(RTC_SR & RTC_SR_TIF_MASK) {
-        SendStr("Time Invalid Flag\r\n");
-    }
-*/
-
-}
-
-void RTCInit () {
-
-    RTC_CR |= RTC_CR_SWR_MASK;  // SWR = 1, reset all RTC's registers
-    RTC_CR &= ~RTC_CR_SWR_MASK; // SWR = 0
-
-    RTC_TCR = 0x0000; // reset CIR and TCR
-
-    RTC_CR |= RTC_CR_OSCE_MASK; // enable 32.768 kHz oscillator
-
-    Delay(0x600000);
-
-    RTC_SR &= ~RTC_SR_TCE_MASK; // turn OFF RTC
-
-    RTC_TSR = 0x00000000; // MIN value in 32bit register
-    RTC_TAR = 0xFFFFFFFF; // MAX value in 32bit register
-
-    RTC_IER |= RTC_IER_TAIE_MASK;
-
-    NVIC_ClearPendingIRQ(RTC_IRQn);
-    NVIC_EnableIRQ(RTC_IRQn);
-
-    RTC_SR |= RTC_SR_TCE_MASK; // turn ON RTC
 }
 
 void Lights(int idx) {
@@ -390,6 +353,57 @@ void Music(int idx) {
     }
 }
 
+void RTC_IRQHandler() {
+    if(RTC_SR & RTC_SR_TAF_MASK) {
+        //SendStr("Time Alarm Flag\r\n");
+        SendStr("== ALARM (wait for finish) ==\r\n");
+        Music(song);
+        Lights(light);
+        if (repeat_count > 0) {
+            repeat_count--;
+            RTC_TAR += delay;
+        }
+        else {
+            RTC_TAR = 0;
+        }
+    }
+    /*
+
+    if(RTC_SR & RTC_SR_TOF_MASK) {
+        //SendStr("Time Overflow Flag\r\n");
+    }
+
+    if(RTC_SR & RTC_SR_TIF_MASK) {
+        //SendStr("Time Invalid Flag\r\n");
+    }
+
+    */
+}
+
+void RTCInit () {
+
+    RTC_CR |= RTC_CR_SWR_MASK;  // SWR = 1, reset all RTC's registers
+    RTC_CR &= ~RTC_CR_SWR_MASK; // SWR = 0
+
+    RTC_TCR = 0x0000; // reset CIR and TCR
+
+    RTC_CR |= RTC_CR_OSCE_MASK; // enable 32.768 kHz oscillator
+
+    Delay(0x600000);
+
+    RTC_SR &= ~RTC_SR_TCE_MASK; // turn OFF RTC
+
+    RTC_TSR = 0x00000000; // MIN value in 32bit register
+    RTC_TAR = 0xFFFFFFFF; // MAX value in 32bit register
+
+    RTC_IER |= RTC_IER_TAIE_MASK;
+
+    NVIC_ClearPendingIRQ(RTC_IRQn);
+    NVIC_EnableIRQ(RTC_IRQn);
+
+    RTC_SR |= RTC_SR_TCE_MASK; // turn ON RTC
+}
+
 int main() {
 
     MCUInit();
@@ -410,20 +424,17 @@ int main() {
 
                 PRINT("Enter date & time in format \"YYYY-MM-DD HH:MM:SS\".");
 
+                SendStr("Input: ");
                 ReceiveStr();
 
                 retval = time_load(buffer, &seconds_init);
-
                 if (retval == true) {
                     RTC_SR &= ~RTC_SR_TCE_MASK; // turn OFF RTC
                     RTC_TSR = seconds_init;
                     RTC_SR |= RTC_SR_TCE_MASK; // turn ON RTC
-                    PRINT("Initialization was successful.");
+                    PRINT("Success.");
                     PRINT("============================");
                     S = SELECTION_MUSIC;
-
-    PRINT_TSR();
-
                 }
                 else {
                     PRINT("Please, repeat the initialization process.");
@@ -436,6 +447,7 @@ int main() {
                 PRINT("Choose music, type \"[1-3]\".");
                 PRINT("You can preview music, type \"B[1-3]\".");
 
+                SendStr("Input: ");
                 ReceiveStr();
 
                 if(strcmp(buffer,"B1")==0) {
@@ -449,16 +461,19 @@ int main() {
                 }
                 else if(strcmp(buffer,"1")==0) {
                     song = 1;
+                    PRINT("Success.");
                     PRINT("============================");
                     S = SELECTION_LIGHT;
                 }
                 else if(strcmp(buffer,"2")==0) {
                     song = 2;
+                    PRINT("Success.");
                     PRINT("============================");
                     S = SELECTION_LIGHT;
                 }
                 else if(strcmp(buffer,"3")==0) {
                     song = 3;
+                    PRINT("Success.");
                     PRINT("============================");
                     S = SELECTION_LIGHT;
                 }
@@ -470,6 +485,7 @@ int main() {
                 PRINT("Choose light, type \"[1-3]\".");
                 PRINT("You can preview light, type \"L[1-3]\".");
 
+                SendStr("Input: ");
                 ReceiveStr();
 
                 if(strcmp(buffer,"L1")==0) {
@@ -483,16 +499,19 @@ int main() {
                 }
                 else if(strcmp(buffer,"1")==0) {
                     light = 1;
+                    PRINT("Success.");
                     PRINT("============================");
                     S = REPEAT;
                 }
                 else if(strcmp(buffer,"2")==0) {
                     light = 2;
+                    PRINT("Success.");
                     PRINT("============================");
                     S = REPEAT;
                 }
                 else if(strcmp(buffer,"3")==0) {
                     light = 3;
+                    PRINT("Success.");
                     PRINT("============================");
                     S = REPEAT;
                 }
@@ -501,16 +520,19 @@ int main() {
             //=================================================================
             case REPEAT:
 
-                PRINT("Enter count of alarm repetition (MIN=1, MAX=20).");
+                PRINT("Enter count of alarm repetition (MIN=1, MAX=5).");
+                PRINT("Enter 0 for no repetition.");
 
+                SendStr("Input: ");
                 ReceiveStr();
 
                 retval = sscanf(buffer,"%d", &repeat_count);
                 if (retval == 1) {
-                    if (repeat_count < 1 || 20 < repeat_count) {
+                    if (repeat_count < 0 || 5 < repeat_count) {
                         PRINT("Wrong count!");
                     }
                     else {
+                        PRINT("Success.");
                         PRINT("============================");
                         S = DELAY;
                     }
@@ -523,16 +545,18 @@ int main() {
             //=================================================================
             case DELAY:
 
-                PRINT("Enter delay in seconds between alarm repetition (MIN=10, MAX=30).");
+                PRINT("Enter delay in seconds between alarm repetition (MIN=30, MAX=300).");
 
+                SendStr("Input: ");
                 ReceiveStr();
 
                 retval = sscanf(buffer,"%d", &delay);
                 if (retval == 1) {
-                    if (delay < 10 || 30 < delay) {
+                    if (delay < 30 || 300 < delay) {
                         PRINT("Wrong delay!");
                     }
                     else {
+                        PRINT("Success.");
                         PRINT("============================");
                         S = SET_ALARM;
                     }
@@ -552,12 +576,13 @@ int main() {
                 time_convert(&seconds_tmp, buffer);
                 PRINT(buffer);
 
+                SendStr("Input: ");
                 ReceiveStr();
 
                 retval = time_load(buffer, &seconds_alarm);
                 if ((retval == true) && (RTC_TSR < seconds_alarm)) {
                     RTC_TAR = seconds_alarm;
-                    PRINT("ALARM initialization was successful.");
+                    PRINT("Success.");
                     PRINT("============================");
                     S = ACTIVE;
                 }
@@ -569,18 +594,41 @@ int main() {
             //=================================================================
             case ACTIVE:
 
-        PRINT_TSR();
-
                 SendStr("Current date & time: ");
                 seconds_tmp = RTC_TSR;
                 time_convert(&seconds_tmp, buffer);
                 PRINT(buffer);
 
                 SendStr("Alarm   date & time: ");
-                time_convert(&seconds_alarm, buffer);
-                PRINT(buffer);
+                seconds_tmp = RTC_TAR;
+                if (seconds_tmp == 0) {
+                    PRINT("OFF");
+                }
+                else {
+                    time_convert(&seconds_tmp, buffer);
+                    PRINT(buffer);
+                }
 
+                SendStr("Input: ");
                 ReceiveStr();
+
+                if(strcmp(buffer,"poweroff")==0) {
+                    while(1);
+                }
+                else if(strcmp(buffer,"reboot")==0) {
+                    S = INITIALIZATION;
+                }
+                else if(strcmp(buffer,"stop")==0) {
+                    RTC_TAR = 0;
+                    PRINT("Alarm disabled.");
+                }
+                else if(strcmp(buffer,"help")==0) {
+                    PRINT("Commands: [ poweroff / reboot / stop / help ].");
+                }
+                else {
+                    ;
+                }
+
                 PRINT("===============");
 
             break;
@@ -591,20 +639,6 @@ int main() {
 
 
     }
-
-    /*
-        PRINT("===========");
-
-        seconds_tmp = RTC_TSR;
-        sprintf(buffer, "seconds_tmp = %d", seconds_tmp);
-        PRINT(buffer);
-
-        time_convert(&seconds_tmp, buffer);
-
-        PRINT_BUFF();
-
-        Delay(3000000);//1s
-*/
 
     return 0;
 }
