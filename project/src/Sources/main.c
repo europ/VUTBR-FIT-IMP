@@ -619,7 +619,7 @@ int main() {
                 ReceiveStr();
 
                 if(strcmp(buffer,"poweroff")==0) {
-                    while(1);
+                    S = HALT;
                 }
                 else if(strcmp(buffer,"reboot")==0) {
                     S = INIT;
@@ -637,6 +637,11 @@ int main() {
 
                 PRINT("===============");
 
+            break;
+            //=================================================================
+            case HALT:
+                PRINT("System powered off!")
+                while(1);
             break;
             //=================================================================
             default:
