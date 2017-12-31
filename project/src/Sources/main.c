@@ -1,12 +1,13 @@
 // Author: Adrián Tóth
 // Login:  xtotha01
-// Date:   12.12.2017
+// Date:   31.12.2017
 
 //#################################################################################################
 //#################################################################################################
 //#################################################################################################
 
 #include "MK60D10.h"
+
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -16,55 +17,6 @@
 //#################################################################################################
 //#################################################################################################
 
-#define PRINT_TSR() { \
-    seconds_tmp = RTC_TSR; \
-    sprintf(buffer, "TSR = %d", seconds_tmp); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    time_convert(&seconds_tmp, buffer); \
-    SendStr("TSR = "); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-}
-
-#define PRINT_BUFF() { \
-    SendStr("BUFFER = "); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-}
-
-#define DEBUG() { \
-    SendStr("================================================\r\n"); \
-    sprintf(buffer, "SONG   = %d", song); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    sprintf(buffer, "LIGHT  = %d", light); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    sprintf(buffer, "DELAY  = %d", delay); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    sprintf(buffer, "REPEAT = %d", repeat_count); \
-    SendStr(buffer); \
-    SendStr("\r\n"); \
-    SendStr("================================================\r\n"); \
-}
-
-#define PRINT_NEWLINE() { \
-    SendStr("\r\n"); \
-}
-
-#define PRINT(msg) { \
-    SendStr(msg); \
-    SendStr("\r\n"); \
-}
-
-#define TIME_LOAD_ERROR(msg) { \
-    SendStr(msg); \
-    SendStr("\r\n"); \
-    return false; \
-}
-
 #define BUFFER_SIZE 101
 
 #define LED_D9  0x20 // Port B, bit 5
@@ -72,10 +24,37 @@
 #define LED_D11 0x8  // Port B, bit 3
 #define LED_D12 0x4  // Port B, bit 2
 
+#define PRINT_NEWLINE() { \
+    SendStr("\r\n");      \
+}
+
+#define PRINT(msg) { \
+    SendStr(msg);    \
+    SendStr("\r\n"); \
+}
+
+#define TIME_LOAD_ERROR(msg) { \
+    SendStr(msg);              \
+    SendStr("\r\n");           \
+    return false;              \
+}
+
 //#################################################################################################
 //#################################################################################################
 //#################################################################################################
 
+char buffer[BUFFER_SIZE];
+
+unsigned int seconds_init;
+unsigned int seconds_alarm;
+unsigned int seconds_tmp;
+
+int song;
+int light;
+int repeat_count;
+int delay;
+
+// Finite-state machine states
 enum State {
     INIT,   // 1 - start state
     MUSIC,  // 2
@@ -87,15 +66,6 @@ enum State {
     HALT    // 8 - final state
 };
 
-char buffer[BUFFER_SIZE];
-unsigned int seconds_init;
-unsigned int seconds_alarm;
-unsigned int seconds_tmp;
-
-int song;
-int light;
-int repeat_count;
-int delay;
 
 //#################################################################################################
 //#################################################################################################
@@ -185,30 +155,38 @@ bool time_load(char* src, unsigned int* dest) {
     retval = sscanf(src, "%d-%d-%d %d:%d:%d", &t.tm_year, &t.tm_mon , &t.tm_mday, &t.tm_hour, &t.tm_min , &t.tm_sec);
     if (retval != 6) TIME_LOAD_ERROR("Wrong format!");
 
-    // date YYYY-MM-DD
+
+    // DATE
     if (t.tm_year < 1970 || 2038 < t.tm_year) TIME_LOAD_ERROR("Wrong year!");
     if (t.tm_mon  < 1    || 12   < t.tm_mon ) TIME_LOAD_ERROR("Wrong month!");
 
-    // JAN,MAR,MAY,JUL,AUG,OCT,DEC
+    // jan,mar,may,jul,aug,oct,dec
     if (t.tm_mon==1 || t.tm_mon==3 || t.tm_mon==5 || t.tm_mon==7 || t.tm_mon==8 || t.tm_mon==10 || t.tm_mon==12) {
         if (t.tm_mday < 1 || 31 < t.tm_mday) TIME_LOAD_ERROR("Wrong day!");
     }
-    // APR,JUN,SEP,NOV
+    // apr,jun,sep,nov
     if (t.tm_mon==4 || t.tm_mon==6 || t.tm_mon==9 || t.tm_mon==11) {
         if (t.tm_mday < 1 || 30 < t.tm_mday) TIME_LOAD_ERROR("Wrong day!");
     }
-    // FEB
+    // feb
     if (t.tm_mon==2) {
-        if (t.tm_mday < 1 || 29 < t.tm_mday) TIME_LOAD_ERROR("Wrong day!");
+        if (t.tm_year % 4) { // gap year
+            if (t.tm_mday < 1 || 29 < t.tm_mday) TIME_LOAD_ERROR("Wrong day!");
+        }
+        else {
+            if (t.tm_mday < 1 || 28 < t.tm_mday) TIME_LOAD_ERROR("Wrong day!");
+        }
     }
 
-    // time HH:MM:SS
-    if (t.tm_hour < 0    || 23   < t.tm_hour) TIME_LOAD_ERROR("Wrong hour!");
-    if (t.tm_min  < 0    || 59   < t.tm_min ) TIME_LOAD_ERROR("Wrong minute!");
-    if (t.tm_sec  < 0    || 59   < t.tm_sec ) TIME_LOAD_ERROR("Wrong second!");
+
+    // TIME
+    if (t.tm_hour < 0 || 23 < t.tm_hour) TIME_LOAD_ERROR("Wrong hour!");
+    if (t.tm_min  < 0 || 59 < t.tm_min ) TIME_LOAD_ERROR("Wrong minute!");
+    if (t.tm_sec  < 0 || 59 < t.tm_sec ) TIME_LOAD_ERROR("Wrong second!");
+
 
     t.tm_year  = t.tm_year - 1900;
-    t.tm_mon   = t.tm_mon - 1;
+    t.tm_mon   = t.tm_mon  - 1;
     t.tm_isdst = -1;
 
     time_t tmp;
@@ -271,9 +249,11 @@ void PortsInit() {
     PTB->PDOR |= GPIO_PDOR_PDO(0x3C); // turn all LEDs OFF
 }
 
+// Lighting effect of alarm
 void Lights(int idx) {
-    if (idx == 1) {
-        for(unsigned int i=0; i<20; i++) { // all leds flashing
+    if (idx == 1) { // all leds flashing
+
+        for(unsigned int i=0; i<20; i++) {
 
             PTB->PDOR &= ~GPIO_PDOR_PDO(0x3C);
             Delay(300000);
@@ -281,9 +261,11 @@ void Lights(int idx) {
             Delay(300000);
 
         }
+
     }
-    else if (idx == 2) {
-        for(unsigned int i=0; i<10; i++) { // leds are one by one flashing
+    else if (idx == 2) { // leds are one by one flashing
+
+        for(unsigned int i=0; i<10; i++) {
 
             GPIOB_PDOR ^= LED_D12;
             PTB->PDOR &= ~GPIO_PDOR_PDO(0x1);
@@ -306,9 +288,11 @@ void Lights(int idx) {
             PTB->PDOR |= GPIO_PDOR_PDO(0x3C);
 
         }
+
     }
-    else if (idx == 3) {
-        for(unsigned int i=0; i<10; i++) { // flashing two edges leds and two middle
+    else if (idx == 3) { // flashing two edges leds and two middle
+
+        for(unsigned int i=0; i<10; i++) {
 
             GPIOB_PDOR ^= (LED_D12 | LED_D9);
             PTB->PDOR &= ~GPIO_PDOR_PDO(0x1);
@@ -323,22 +307,30 @@ void Lights(int idx) {
             Delay(300000);
 
         }
+
     }
+
 }
 
+// Sound effect of alarm
 void Music(int idx) {
     if (idx == 1) { // interrupted beeping -> 15times beep+pause
+
         for(unsigned int i=0; i<15; i++) {
             Beep();
             Delay(70000);
         }
+
     }
     else if (idx == 2) { // non interrupted beeping -> one long beeeeeeeeeeeeep
+
         for(unsigned int i=0; i<20; i++) {
             Beep();
         }
+
     }
     else if (idx == 3) { // buzzer -> (pi-pi-pi-pi) (silence) (pi-pi-pi-pi) (silence) (pi-pi-pi-pi)
+
         for(unsigned int i=0; i<3; i++) {
 
             Beep();
@@ -351,18 +343,20 @@ void Music(int idx) {
 
             Delay(2000000); // propably 1 second silence
         }
+
     }
 }
 
+// RTC interrupt handler
 void RTC_IRQHandler() {
     if(RTC_SR & RTC_SR_TAF_MASK) {
 
         // Time Alarm Flag
 
-        SendStr("== ALARM (wait for finish) ==\r\n");
+        SendStr("== ALARM (wait for finish) ==\r\nInput: ");
 
-        Music(song);
-        Lights(light);
+        Music(song);   // launch sound effect
+        Lights(light); // launch light effect
 
         if (repeat_count > 0) {
             repeat_count--;
@@ -387,6 +381,7 @@ void RTC_IRQHandler() {
     */
 }
 
+// RTC INIT
 void RTCInit() {
 
     RTC_CR |= RTC_CR_SWR_MASK;  // SWR = 1, reset all RTC's registers
@@ -411,6 +406,7 @@ void RTCInit() {
     RTC_SR |= RTC_SR_TCE_MASK; // turn ON RTC
 }
 
+// the main
 int main() {
 
     MCUInit();
