@@ -356,10 +356,14 @@ void Music(int idx) {
 
 void RTC_IRQHandler() {
     if(RTC_SR & RTC_SR_TAF_MASK) {
-        //SendStr("Time Alarm Flag\r\n");
+
+        // Time Alarm Flag
+
         SendStr("== ALARM (wait for finish) ==\r\n");
+
         Music(song);
         Lights(light);
+
         if (repeat_count > 0) {
             repeat_count--;
             RTC_TAR += delay;
@@ -367,15 +371,17 @@ void RTC_IRQHandler() {
         else {
             RTC_TAR = 0;
         }
+
     }
+
     /*
 
     if(RTC_SR & RTC_SR_TOF_MASK) {
-        //SendStr("Time Overflow Flag\r\n");
+        // Time Overflow Flag
     }
 
     if(RTC_SR & RTC_SR_TIF_MASK) {
-        //SendStr("Time Invalid Flag\r\n");
+        // Time Invalid Flag
     }
 
     */
@@ -619,17 +625,23 @@ int main() {
                 ReceiveStr();
 
                 if(strcmp(buffer,"poweroff")==0) {
+                    RTC_TAR = 0; // turn off alarm
                     S = HALT;
                 }
                 else if(strcmp(buffer,"reboot")==0) {
+                    RTC_TAR = 0; // turn off alarm
                     S = INIT;
                 }
                 else if(strcmp(buffer,"stop")==0) {
-                    RTC_TAR = 0;
+                    RTC_TAR = 0; // turn off alarm
                     PRINT("Alarm disabled.");
                 }
+                else if(strcmp(buffer,"new")==0) {
+                    RTC_TAR = 0; // turn off alarm
+                    S = MUSIC;
+                }
                 else if(strcmp(buffer,"help")==0) {
-                    PRINT("Commands: [ poweroff / reboot / stop / help ].");
+                    PRINT("Commands: [ poweroff / reboot / stop / new / help ].");
                 }
                 else {
                     ;
